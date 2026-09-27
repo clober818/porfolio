@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharma QMS | FMEA 자동화 솔루션</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .pulse-red {
+            animation: pulse-red-animation 2s infinite;
+        }
+        @keyframes pulse-red-animation {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .pulse-green {
+            animation: pulse-green-animation 2s infinite;
+        }
+        @keyframes pulse-green-animation {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            accent-color: #2563eb;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        /* Print Media Query Optimization */
+        @media print {
+            body {
+                background-color: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-container {
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .glass-card, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen pb-20">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 print-container">
+        
+        <!-- Header -->
+        <header class="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span class="px-2.5 py-0.5 bg-blue-100 text-blue-800 font-bold text-xs rounded-full uppercase tracking-wider">ICH Q9 QRM Compliant</span>
+                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full">GMP QMS Module</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Pharma QMS | FMEA 자동화 솔루션</h1>
+                <p class="text-sm text-slate-500 mt-1">ICH Q9 가이드라인 기반 QC 품질위험평가(RA) 시나리오 분석 및 RPN 자동 산출 대시보드</p>
+            </div>
+            <div class="flex items-center gap-3 no-print">
+                <button type="button" onclick="openSodModal()" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-book-open text-indigo-500"></i>
+                    <span>SOD 평가 기준표 보기</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- SECTION 1: Input & Scenario Quick Fill -->
+        <section class="mb-10 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 no-print">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-list text-blue-600"></i>
+                        1. 리스크 평가 시나리오 작성 및 선택
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">실무 문제 상황과 개선 방안(CAPA)을 직접 작성하거나 검증된 추천 시나리오를 선택하세요.</p>
+                </div>
+
+                <!-- Scenario Quick Select Buttons -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-semibold text-slate-400 mr-1">추천 시나리오:</span>
+                    <button type="button" onclick="loadPreset('equip_inconsistency')" class="px-3 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-microscope text-blue-500"></i> 작업장 장비 불일치
+                    </button>
+                    <button type="button" onclick="loadPreset('audit_trail')" class="px-3 py-1.5 text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-laptop-code text-slate-500"></i> Audit Trail 누락
+                    </button>
+                    <button type="button" onclick="loadPreset('reagent_expiry')" class="px-3 py-1.5 text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-vial-circle-check text-slate-500"></i> 시약 유효기간 오용
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form Inputs -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Issue Textarea -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="issueText" class="text-xs font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+                            <i class="fa-solid fa-triangle-exclamation"></i> 발생 문제 상황 (Failure Mode & Root Cause)
+                        </label>
+                        <span class="text-[11px] text-slate-400 font-medium" id="issueCharCount">0 자</span>
+                    </div>
+                    <textarea id="issueText" rows="4" oninput="updateCharCount('issueText', 'issueCharCount')" class="w-full p-4 text-sm text-slate-800 bg-rose-50/30 border border-rose-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all placeholder:text-slate-400" placeholder="예: A작업장과 B작업장의 기기 수량 불일치로 교차 투입 작업자의 동선 및 절차 혼선 발생..."></textarea>
+                </div>
+
+                <!-- CAPA Textarea -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="capaText" class="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-halved"></i> 개선 방안 (Proposed CAPA)
+                        </label>
+                        <span class="text-[11px] text-slate-400 font-medium" id="capaCharCount">0 자</span>
+                    </div>
+                    <textarea id="capaText" rows="4" oninput="updateCharCount('capaText', 'capaCharCount')" class="w-full p-4 text-sm text-slate-800 bg-emerald-50/30 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400" placeholder="예: 부족한 장비를 추가 도입하여 A/B 작업장의 장비 구성 및 레이아웃을 100% 표준화..."></textarea>
+                </div>
+            </div>
+
+            <!-- Analyze Action Button -->
+            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button type="button" id="btnAnalyze" onclick="executeFMEAAIAssessment()" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>AI & FMEA 자동 평가 실행</span>
+                </button>
+                <button type="button" onclick="resetForm()" class="w-full sm:w-auto px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i> 초기화
+                </button>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Before vs After Comparative Dashboard with Interactive SOD Controls -->
+        <section class="mb-10">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4 px-1">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-blue-600"></i>
+                        2. FMEA 리스크 평가 및 SOD 미세조정
+                    </h2>
+                    <p class="text-xs text-slate-500">슬라이더를 통해 심각도(S), 발생도(O), 검출도(D) 수치를 직접 미세조정할 수 있습니다.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="analysisBadge" class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">분석 완료</span>
+                </div>
+            </div>
+
+            <!-- Comparative Grid Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- CARD 1: BEFORE CAPA -->
+                <div class="bg-white rounded-2xl shadow-sm border-2 border-rose-200 overflow-hidden flex flex-col justify-between transition-all">
+                    <!-- Card Top Header -->
+                    <div class="bg-rose-500 text-white p-4 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                            <h3 class="font-extrabold text-base tracking-wide">개선 전 (Before CAPA)</h3>
+                        </div>
+                        <span id="beforeBadge" class="px-3 py-1 bg-rose-700 text-rose-100 text-xs font-bold rounded-full uppercase tracking-wider pulse-red">
+                            🚨 수용 불가 (HIGH RISK)
+                        </span>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-6 space-y-6">
+                        <!-- RPN Display -->
+                        <div class="text-center py-4 bg-rose-50/60 rounded-2xl border border-rose-100">
+                            <p class="text-xs font-bold uppercase text-rose-600 tracking-wider">위험우선순위 (RPN)</p>
+                            <div class="flex items-center justify-center gap-2 my-1">
+                                <span class="text-5xl font-black text-rose-600" id="beforeRPN">288</span>
+                                <span class="text-xs text-rose-400 font-semibold self-end mb-1">/ 1000 점</span>
+                            </div>
+                            <p class="text-xs font-bold text-rose-700" id="beforeEquation">S(6) × O(8) × D(6) = 288점</p>
+                        </div>
+
+                        <!-- Interactive SOD Controls -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-2">
+                                <span><i class="fa-solid fa-sliders text-rose-500 mr-1"></i> 개선 전 SOD 수치 조절</span>
+                                <span class="text-[10px] text-slate-400 font-normal">슬라이더 드래그 가능</span>
+                            </h4>
+
+                            <!-- Severity Slider -->
+                            <div>
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="font-bold text-slate-700">심각도 (Severity, S):</span>
+                                    <span class="font-black text-rose-600 text-sm" id="val_beforeS">6</span>
+                                </div>
+                                <input type="range" min="1" max="10" value="6" id="slider_beforeS" oninput="onSODChange()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+
+                            <!-- Occurrence Slider -->
+                            <div>
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="font-bold text-slate-700">발생도 (Occurrence, O):</span>
+                                    <span class="font-black text-rose-600 text-sm" id="val_beforeO">8</span>
+                                </div>
+                                <input type="range" min="1" max="10" value="8" id="slider_beforeO" oninput="onSODChange()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+
+                            <!-- Detection Slider -->
+                            <div>
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="font-bold text-slate-700">검출도 (Detection, D):</span>
+                                    <span class="font-black text-rose-600 text-sm" id="val_beforeD">6</span>
+                                </div>
+                                <input type="range" min="1" max="10" value="6" id="slider_beforeD" oninput="onSODChange()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+
+                        <!-- Justification Rationale -->
+                        <div class="space-y-2.5 text-xs text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-800 text-xs border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-magnifying-glass-chart text-rose-500"></i> 점수 산정 근거 (Rationale)
+                            </h4>
+                            <div>
+                                <strong class="text-rose-700">S (심각도):</strong> <span id="beforeS_reason">작업자 착각으로 인한 시험 세션 무효화 및 공식 일탈(Deviation) 발생 파급력.</span>
+                            </div>
+                            <div>
+                                <strong class="text-rose-700">O (발생도):</strong> <span id="beforeO_reason">작업장 간 비표준화로 교차 투입 시 작업자 혼선 오차가 월 수회 이상 재발할 구조적 원인 존재.</span>
+                            </div>
+                            <div>
+                                <strong class="text-rose-700">D (검출도):</strong> <span id="beforeD_reason">2차 검토자가 서류 점검 시 수동으로 오류를 발견하므로 휴먼 에러 간과 가능성 보유.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Status -->
+                    <div class="px-6 py-3 bg-rose-50 border-t border-rose-100 text-xs font-bold text-rose-800 flex items-center justify-between">
+                        <span>⚠️ 즉각적인 CAPA 수립 및 품질책임자 승인 대상</span>
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+                    </div>
+                </div>
+
+                <!-- CARD 2: AFTER CAPA -->
+                <div class="bg-white rounded-2xl shadow-sm border-2 border-emerald-300 overflow-hidden flex flex-col justify-between transition-all">
+                    <!-- Card Top Header -->
+                    <div class="bg-emerald-600 text-white p-4 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-shield-check text-lg"></i>
+                            <h3 class="font-extrabold text-base tracking-wide">개선 후 (After CAPA)</h3>
+                        </div>
+                        <span id="afterBadge" class="px-3 py-1 bg-emerald-800 text-emerald-100 text-xs font-bold rounded-full uppercase tracking-wider pulse-green">
+                            ✅ 허용 가능 (ACCEPTABLE)
+                        </span>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-6 space-y-6">
+                        <!-- RPN Display -->
+                        <div class="text-center py-4 bg-emerald-50/60 rounded-2xl border border-emerald-100">
+                            <p class="text-xs font-bold uppercase text-emerald-600 tracking-wider">개선 후 RPN</p>
+                            <div class="flex items-center justify-center gap-2 my-1">
+                                <span class="text-5xl font-black text-emerald-600" id="afterRPN">36</span>
+                                <span class="text-xs text-emerald-500 font-semibold self-end mb-1">/ 1000 점</span>
+                            </div>
+                            <p class="text-xs font-bold text-emerald-700" id="afterEquation">S(6) × O(2) × D(3) = 36점</p>
+                        </div>
+
+                        <!-- Interactive SOD Controls -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 pb-2">
+                                <span><i class="fa-solid fa-sliders text-emerald-500 mr-1"></i> 개선 후 SOD 수치 조절</span>
+                                <span class="text-[10px] text-slate-400 font-normal">슬라이더 드래그 가능</span>
+                            </h4>
+
+                            <!-- Severity Slider -->
+                            <div>
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="font-bold text-slate-700">심각도 (Severity, S):</span>
+                                    <span class="font-black text-emerald-600 text-sm" id="val_afterS">6</span>
+                                </div>
+                                <input type="range" min="1" max="10" value="6" id="slider_afterS" oninput="onSODChange()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+
+                            <!-- Occurrence Slider -->
+                            <div>
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="font-bold text-slate-700">발생도 (Occurrence, O):</span>
+                                    <span class="font-black text-emerald-600 text-sm" id="val_afterO">2</span>
+                                </div>
+                                <input type="range" min="1" max="10" value="2" id="slider_afterO" oninput="onSODChange()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+
+                            <!-- Detection Slider -->
+                            <div>
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="font-bold text-slate-700">검출도 (Detection, D):</span>
+                                    <span class="font-black text-emerald-600 text-sm" id="val_afterD">3</span>
+                                </div>
+                                <input type="range" min="1" max="10" value="3" id="slider_afterD" oninput="onSODChange()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+
+                        <!-- Justification Rationale -->
+                        <div class="space-y-2.5 text-xs text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-800 text-xs border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-clipboard-check text-emerald-500"></i> 개선 점수 근거 (Rationale)
+                            </h4>
+                            <div>
+                                <strong class="text-emerald-700">S (심각도 유지):</strong> <span id="afterS_reason">문제 발생 시 최악의 영향도는 동일하므로 심각도는 유지됨 (CAPA 원칙 준수).</span>
+                            </div>
+                            <div>
+                                <strong class="text-emerald-700">O (발생도 개선):</strong> <span id="afterO_reason">장비 100% 동일 규격화로 근본 원인(Root Cause)이 제거되어 혼선 발생율이 극도로 낮아짐.</span>
+                            </div>
+                            <div>
+                                <strong class="text-emerald-700">D (검출도 개선):</strong> <span id="afterD_reason">최신 표준 장비 도입으로 인터락 및 자동 이탈 알림 기능이 작동하여 오류 검출 용이.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Safety Status -->
+                    <div class="px-6 py-3 bg-emerald-50 border-t border-emerald-100 text-xs font-bold text-emerald-800 flex items-center justify-between">
+                        <span>🛡️ 정기 모니터링 관리 구역 전환</span>
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 3: Risk Matrix Heatmap & Visual Metrics -->
+        <section class="mb-10 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-table-cells-large text-indigo-600"></i>
+                        3. 리스크 이동 시각화 (Risk Matrix 5x5 Heatmap)
+                    </h2>
+                    <p class="text-xs text-slate-500">심각도(S)와 발생도(O) 조합에 따른 리스크 영역의 이동 궤적을 확인하세요.</p>
+                </div>
+                <div class="flex items-center gap-4 text-xs font-medium">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span> 개선 전 (Before)</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> 개선 후 (After)</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <!-- Heatmap Grid Container -->
+                <div class="lg:col-span-7 flex flex-col items-center">
+                    <div class="w-full max-w-md">
+                        <!-- Y-axis Label -->
+                        <div class="text-xs font-bold text-slate-500 mb-1 text-center">▲ 심각도 (Severity: 1 ~ 10)</div>
+                        
+                        <!-- 5x5 Grid representation for simplicity -->
+                        <div class="grid grid-cols-5 gap-1.5 p-2 bg-slate-100 rounded-2xl border border-slate-200" id="matrixGrid">
+                            <!-- Dynamically Generated Matrix Cells via JS -->
+                        </div>
+                        
+                        <!-- X-axis Label -->
+                        <div class="text-xs font-bold text-slate-500 mt-2 text-center">발생도 (Occurrence: 1 ~ 10) ▶</div>
+                    </div>
+                </div>
+
+                <!-- Summary Gauge & Indicators -->
+                <div class="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-5">
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-2">
+                        리스크 감소율 지표
+                    </h3>
+
+                    <div>
+                        <div class="flex justify-between items-center text-xs font-bold mb-1.5">
+                            <span class="text-slate-600">위험 감소율 (RPN Drop Rate):</span>
+                            <span id="reductionPercentText" class="text-emerald-600 text-base font-black">87.5% 감소</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-4 p-0.5 border border-slate-300">
+                            <div id="reductionProgressBar" class="bg-gradient-to-r from-teal-500 to-emerald-500 h-3 rounded-full transition-all duration-700 flex justify-end items-center pr-1.5" style="width: 87.5%">
+                                <span class="text-[9px] font-black text-white">87.5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-center pt-2">
+                        <div class="p-3 bg-white rounded-xl border border-slate-200">
+                            <span class="text-[10px] text-slate-400 font-bold block uppercase">이전 RPN</span>
+                            <span class="text-2xl font-black text-rose-600" id="matrixBeforeRPN">288</span>
+                        </div>
+                        <div class="p-3 bg-white rounded-xl border border-slate-200">
+                            <span class="text-[10px] text-slate-400 font-bold block uppercase">개선 후 RPN</span>
+                            <span class="text-2xl font-black text-emerald-600" id="matrixAfterRPN">36</span>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-slate-500 leading-relaxed bg-white p-3 rounded-xl border border-slate-200">
+                        <i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>
+                        ICH Q9 가이드라인 기준 <strong>RPN 50점 이하</strong>는 수용 가능한 영역(Acceptable Region)으로 판정됩니다.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: CAPA Implementation & Responsibility Planner -->
+        <section class="mb-10 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 no-print">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-purple-600"></i>
+                        4. CAPA 이행 계획 및 담당 부서 지정
+                    </h2>
+                    <p class="text-xs text-slate-500">품질 보증(QA) 및 실사를 위한 이행 목표일과 유효성 평가 계획을 입력하세요.</p>
+                </div>
+                <span class="px-2.5 py-1 bg-purple-50 text-purple-700 border border-purple-200 text-xs font-bold rounded-lg">
+                    CAPA Tracking
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                <div>
+                    <label for="capaDept" class="block font-bold text-slate-700 mb-1">주관/담당 부서</label>
+                    <input type="text" id="capaDept" value="품질관리팀 (QC / 분석3파트)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label for="capaOwner" class="block font-bold text-slate-700 mb-1">이행 책임자</label>
+                    <input type="text" id="capaOwner" value="QC 팀장 / 장비관리책임자" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label for="capaDueDate" class="block font-bold text-slate-700 mb-1">완료 목표일</label>
+                    <input type="date" id="capaDueDate" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label for="effCheckPeriod" class="block font-bold text-slate-700 mb-1">유효성 평가(Effectiveness) 주기</label>
+                    <select id="effCheckPeriod" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                        <option value="3개월 후">이행 후 3개월 (권장)</option>
+                        <option value="6개월 후">이행 후 6개월</option>
+                        <option value="12개월 후">이행 후 12개월</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: Recent Assessments History Table -->
+        <section class="mb-10 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 no-print">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-history text-slate-600"></i>
+                    5. 최근 평가 이력 및 저장 목록
+                </h2>
+                <button type="button" onclick="saveCurrentAssessment()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1">
+                    <i class="fa-solid fa-bookmark text-amber-400"></i> 현재 평가 저장
+                </button>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50 text-slate-700 font-bold uppercase border-b border-slate-200">
+                        <tr>
+                            <th class="p-3">일시</th>
+                            <th class="p-3">문제 개요</th>
+                            <th class="p-3">Before RPN</th>
+                            <th class="p-3">After RPN</th>
+                            <th class="p-3">감소율</th>
+                            <th class="p-3 text-right">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-slate-100">
+                        <!-- JS populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 6: Executive Summary Report Box & Actions -->
+        <section class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl">
+            <div class="max-w-4xl mx-auto text-center space-y-6">
+                
+                <span class="inline-block px-3.5 py-1 bg-blue-500/20 text-blue-300 font-bold text-xs rounded-full border border-blue-400/30 uppercase tracking-widest">
+                    <i class="fa-solid fa-file-signature mr-1"></i> 품질위험관리(QRM) 총평 리포트
+                </span>
+
+                <h3 class="text-2xl sm:text-3xl font-black tracking-tight">
+                    RPN 리스크 감소 효과: <span id="deltaRPNText" class="text-amber-400">288점 ➔ 36점</span>
+                </h3>
+
+                <!-- Executive Recommendation Box -->
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/10 text-left text-xs sm:text-sm text-slate-200 leading-relaxed space-y-3">
+                    <div class="font-bold text-white flex items-center gap-2 text-base">
+                        <i class="fa-solid fa-award text-amber-400"></i>
+                        QRM 전문가 타당성 검증 결과
+                    </div>
+                    <p id="summaryText">
+                        "제안된 CAPA 적용 결과, RPN이 <strong>288점(수용 불가)</strong>에서 <strong>36점(허용 가능)</strong>으로 <strong>87.5% 대폭 감소</strong>합니다. 이는 인적 오류(Human Error) 유발 근본 원인을 완벽히 통제함을 FMEA 기법으로 입증하였으므로, <strong>본 개선안 추진은 타당하며 실행을 권고합니다.</strong>"
+                    </p>
+                </div>
+
+                <!-- Print & Export Action Buttons -->
+                <div class="flex flex-wrap justify-center gap-3 no-print pt-2">
+                    <button type="button" onclick="printReport()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center gap-2">
+                        <i class="fa-solid fa-print"></i> PDF 보고서 인쇄 (Print PDF)
+                    </button>
+                    <button type="button" onclick="copySummaryToClipboard()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-copy"></i> 요약문 클립보드 복사
+                    </button>
+                    <button type="button" onclick="exportCsv()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-file-csv"></i> CSV 이력 내보내기
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MODAL: SOD Criteria Reference Guide -->
+    <div id="sodModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-indigo-400 text-lg"></i>
+                    <h3 class="font-bold text-base">제약 QC 맞춤형 FMEA SOD 평가 기준표 (ICH Q9 준수)</h3>
+                </div>
+                <button type="button" onclick="closeSodModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Tabbed / Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
+                <!-- Severity Section -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-rose-700 mb-2 flex items-center gap-1.5 border-b border-rose-200 pb-1">
+                        <i class="fa-solid fa-shield-halved"></i> 심각도 (Severity, S) 평가 기준
+                    </h4>
+                    <table class="w-full text-left border-collapse border border-slate-200">
+                        <thead class="bg-slate-100 text-slate-800 font-bold">
+                            <tr>
+                                <th class="p-2 border">점수</th>
+                                <th class="p-2 border">등급</th>
+                                <th class="p-2 border">QC 실무 예시 (OOS, DI, 기기 결함)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr><td class="p-2 border font-bold text-center">10</td><td class="p-2 border font-bold text-rose-600">치명적</td><td class="p-2 border">고의적 DI 위반, 중요 시험 누락 후 부적합품 출하 (환자 위해)</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">8</td><td class="p-2 border font-bold text-rose-600">심각</td><td class="p-2 border">안정성 OOS 발생, Audit Trail 리뷰 전무로 신뢰성 부정 (배치 폐기)</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">6</td><td class="p-2 border font-bold text-amber-600">보통</td><td class="p-2 border">시약 유효기간 초과 사용 등 부주의로 분석 세션 무효화 및 공식 일탈 발생</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">4</td><td class="p-2 border font-bold text-slate-600">매우 낮음</td><td class="p-2 border">저울 일일 점검 누락했으나 사후 검증 결과 정상 이내</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">1</td><td class="p-2 border font-bold text-emerald-600">영향 없음</td><td class="p-2 border">정상 시험 수행. 데이터 및 품질 영향 없음</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Occurrence Section -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-blue-700 mb-2 flex items-center gap-1.5 border-b border-blue-200 pb-1">
+                        <i class="fa-solid fa-rotate-right"></i> 발생도 (Occurrence, O) 평가 기준
+                    </h4>
+                    <table class="w-full text-left border-collapse border border-slate-200">
+                        <thead class="bg-slate-100 text-slate-800 font-bold">
+                            <tr>
+                                <th class="p-2 border">점수</th>
+                                <th class="p-2 border">빈도</th>
+                                <th class="p-2 border">QC 실무 예시</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr><td class="p-2 border font-bold text-center">10~8</td><td class="p-2 border font-bold text-rose-600">자주 발생</td><td class="p-2 border">구조적 원인(비표준화)으로 교차 투입 시 월 수회 이상 재발</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">6~5</td><td class="p-2 border font-bold text-amber-600">간헐적</td><td class="p-2 border">월 1~2회 정도 발생하는 시스템 적합성(SST) 실패 오차</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">3~2</td><td class="p-2 border font-bold text-emerald-600">희박함</td><td class="p-2 border">연 1~2회 발생하는 미세 부품 노후화/고장</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">1</td><td class="p-2 border font-bold text-emerald-600">극히 드묾</td><td class="p-2 border">완벽한 예방보전(PM)과 표준화로 재발 가능성 없음</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Detection Section -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-emerald-700 mb-2 flex items-center gap-1.5 border-b border-emerald-200 pb-1">
+                        <i class="fa-solid fa-eye"></i> 검출도 (Detection, D) 평가 기준
+                    </h4>
+                    <table class="w-full text-left border-collapse border border-slate-200">
+                        <thead class="bg-slate-100 text-slate-800 font-bold">
+                            <tr>
+                                <th class="p-2 border">점수</th>
+                                <th class="p-2 border">통제 수준</th>
+                                <th class="p-2 border">QC 실무 예시</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr><td class="p-2 border font-bold text-center">10~8</td><td class="p-2 border font-bold text-rose-600">검출 어려움</td><td class="p-2 border">수동 서류 확인에만 의존하며 동료/2차 검토자 검증이 부실함</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">6~5</td><td class="p-2 border font-bold text-amber-600">보통</td><td class="p-2 border">2차 검토자가 Raw Data와 Audit Trail을 수동 교차점검함</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">4~2</td><td class="p-2 border font-bold text-emerald-600">높음</td><td class="p-2 border">LIMS/CDS에서 자동 알림(Alert) 팝업 및 SST 차단 작동</td></tr>
+                            <tr><td class="p-2 border font-bold text-center">1</td><td class="p-2 border font-bold text-emerald-600">원천 차단</td><td class="p-2 border">Error-proofing (Poka-Yoke) 바코드 스캔 시스템으로 수기 입력 차단</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button type="button" onclick="closeSodModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs">
+                    확인 및 닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Preset QC Scenarios Dictionary
+        const presets = {
+            equip_inconsistency: {
+                issue: "A작업장과 B작업장에 비치된 분석 기기(HPLC/저울 등) 수량 및 구성이 서로 다름. 작업장 간 표준화가 되어있지 않아 교차 투입되는 작업자가 기기 위치, 동선, 조작 절차에 혼선을 일으켜 수기 입력 오차 및 세션 실패 등 인위적 일탈(Human Error)이 빈번히 발생함.",
+                capa: "부족한 분석 기기를 추가 구입하여 A작업장과 B작업장의 기기 배치, 작업 동선, SOP 절차를 100% 동일하게 표준화함. 작업자 교육 실시 및 표준화 체크리스트 적용.",
+                beforeS: 6, beforeO: 8, beforeD: 6,
+                beforeS_reason: "작업자 인적 오류로 인한 시험 세션 무효화 및 공식 일탈(Deviation) 조사 발생 파급력.",
+                beforeO_reason: "작업장 비표준화라는 구조적 근본 원인이 존재하여 교차 투입 시 월 수회 이상 재발함.",
+                beforeD_reason: "동료/2차 검토자의 수동 기록 점검(Manual Review)에 의존하여 검출 실효성 제한.",
+                afterS: 6, afterO: 2, afterD: 3,
+                afterS_reason: "오류 발생 시 제품 품질에 미치는 잠재적 심각도 파급력은 동일하므로 6점 유지.",
+                afterO_reason: "작업장 100% 동일 환경 구축으로 인적 혼선 원인이 근본 제거되어 발생 빈도 급감.",
+                afterD_reason: "신규 표준 장비의 자동 입력 제어 및 경고 시스템 연동으로 검출 용이성 대폭 향상."
+            },
+            audit_trail: {
+                issue: "기기 데이터의 Audit Trail 검토가 정기 자동 시스템 없이 2차 검토자의 수동 출력물 서명 점검으로만 진행됨. 수동 점검 특성상 검토 누락 또는 부주의로 인한 데이터 완전성(DI) 오점이 발생할 리스크 존재.",
+                capa: "CDS/LIMS 연동 자동 Audit Trail 파싱 및 이상 변경(예: 파일 삭제/재해석) 시 자동 알람(Alert) 팝업 기능을 도입하여 100% 자동 검증 체계 구현.",
+                beforeS: 8, beforeO: 5, beforeD: 7,
+                beforeS_reason: "Audit Trail 리뷰 누락 시 실사 지적(Form 483) 및 데이터 신뢰성 전면 부인 위험.",
+                beforeO_reason: "수동 점검 절차상 바쁜 출하 일정 시 월 1~2회 누락이나 검토 지연 발생.",
+                beforeD_reason: "사람의 눈으로 일일이 로그를 대조하므로 교묘한 오차나 누락을 발견하기 어려움.",
+                afterS: 8, afterO: 2, afterD: 2,
+                afterS_reason: "DI 위반 시 규제 기관 영향도의 법적 심각도는 8점으로 동일 유지.",
+                afterO_reason: "자동 점검 모듈 적용으로 인간의 수동 작업 필요성이 배제되어 누락 발생율 미미.",
+                afterD_reason: "이상 변경 시 시스템에 의해 즉각 100% 필터링 및 차단되므로 검출 확실."
+            },
+            reagent_expiry: {
+                issue: "시험용 조제 시약 보관소의 유효기간 관리가 라벨 수기 기록에 의존하여, 유효기간이 경과한 시약을 부주의로 사용하여 분석 데이터 무효화 및 OOS 시험 재수행 사례 발생.",
+                capa: "시약 용기에 2D 바코드 라벨을 도입하고 LIMS와 연동하여 분석 전 기기 스캔 시 유효기간 경과 시약은 자동으로 분석 진행이 원천 차단(Poka-Yoke)되는 시스템 구축.",
+                beforeS: 6, beforeO: 6, beforeD: 5,
+                beforeS_reason: "유효기간 초과 시약 사용으로 분석 전체 무효화 및 재분석/일탈 조사 필요.",
+                beforeO_reason: "수많은 시약 보관 특성상 분기별 1~2회 정도 부주의 사용 위험 존재.",
+                beforeD_reason: "시험자가 직접 수동으로 일일이 날짜를 확인해야 하므로 사후 검토에서 발견됨.",
+                afterS: 6, afterO: 1, afterD: 1,
+                afterS_reason: "분석 무효화 발생 시 일탈 조사 파급력 자체는 6점 유지.",
+                afterO_reason: "바코드 미인식 시 시약 투입 자체가 원천 차단되어 발생률 zero에 수렴.",
+                afterD_reason: "시스템 상 Poka-Yoke(Error-proofing) 설계로 100% 분석 전 자동 차단."
+            }
+        };
+
+        // Assessment History Array
+        let assessmentHistory = [];
+
+        // On Page Load Initialization
+        window.onload = function() {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('capaDueDate').value = today;
+
+            // Load default preset
+            loadPreset('equip_inconsistency');
+
+            // Render matrix grid
+            renderMatrixGrid();
+        };
+
+        // Load Preset Handler
+        function loadPreset(key) {
+            const data = presets[key];
+            if (!data) return;
+
+            document.getElementById('issueText').value = data.issue;
+            document.getElementById('capaText').value = data.capa;
+
+            updateCharCount('issueText', 'issueCharCount');
+            updateCharCount('capaText', 'capaCharCount');
+
+            // Set Sliders
+            setSliderValues('beforeS', data.beforeS);
+            setSliderValues('beforeO', data.beforeO);
+            setSliderValues('beforeD', data.beforeD);
+
+            setSliderValues('afterS', data.afterS);
+            setSliderValues('afterO', data.afterO);
+            setSliderValues('afterD', data.afterD);
+
+            // Update Reasons
+            document.getElementById('beforeS_reason').innerText = data.beforeS_reason;
+            document.getElementById('beforeO_reason').innerText = data.beforeO_reason;
+            document.getElementById('beforeD_reason').innerText = data.beforeD_reason;
+
+            document.getElementById('afterS_reason').innerText = data.afterS_reason;
+            document.getElementById('afterO_reason').innerText = data.afterO_reason;
+            document.getElementById('afterD_reason').innerText = data.afterD_reason;
+
+            // Recalculate
+            calculateRPN();
+            showToast("선택한 QC 추천 시나리오가 성공적으로 로드되었습니다.", "info");
+        }
+
+        // Helper to set slider & value text
+        function setSliderValues(prefix, value) {
+            const slider = document.getElementById(`slider_${prefix}`);
+            const valDisplay = document.getElementById(`val_${prefix}`);
+            if (slider && valDisplay) {
+                slider.value = value;
+                valDisplay.innerText = value;
+            }
+        }
+
+        // Character count indicator
+        function updateCharCount(inputId, countId) {
+            const txt = document.getElementById(inputId).value;
+            document.getElementById(countId).innerText = `${txt.length} 자`;
+        }
+
+        // Slider Input Change Event
+        function onSODChange() {
+            // Update value text displays
+            ['beforeS', 'beforeO', 'beforeD', 'afterS', 'afterO', 'afterD'].forEach(key => {
+                const val = document.getElementById(`slider_${key}`).value;
+                document.getElementById(`val_${key}`).innerText = val;
+            });
+
+            calculateRPN();
+        }
+
+        // Main Calculation Engine
+        function calculateRPN() {
+            const bS = parseInt(document.getElementById('slider_beforeS').value);
+            const bO = parseInt(document.getElementById('slider_beforeO').value);
+            const bD = parseInt(document.getElementById('slider_beforeD').value);
+            const bRPN = bS * bO * bD;
+
+            const aS = parseInt(document.getElementById('slider_afterS').value);
+            const aO = parseInt(document.getElementById('slider_afterO').value);
+            const aD = parseInt(document.getElementById('slider_afterD').value);
+            const aRPN = aS * aO * aD;
+
+            // Equations
+            document.getElementById('beforeRPN').innerText = bRPN;
+            document.getElementById('beforeEquation').innerText = `S(${bS}) × O(${bO}) × D(${bD}) = ${bRPN}점`;
+
+            document.getElementById('afterRPN').innerText = aRPN;
+            document.getElementById('afterEquation').innerText = `S(${aS}) × O(${aO}) × D(${aD}) = ${aRPN}점`;
+
+            // Badges
+            updateRiskBadge('beforeBadge', bRPN);
+            updateRiskBadge('afterBadge', aRPN);
+
+            // Drop calculation
+            const dropAmount = bRPN - aRPN;
+            const dropPercent = Math.max(0, Math.min(100, ((dropAmount / (bRPN || 1)) * 100).toFixed(1)));
+
+            document.getElementById('deltaRPNText').innerText = `${bRPN}점 ➔ ${aRPN}점`;
+            document.getElementById('reductionPercentText').innerText = `${dropPercent}% 감소`;
+
+            const progressBar = document.getElementById('reductionProgressBar');
+            progressBar.style.width = `${dropPercent}%`;
+            progressBar.querySelector('span').innerText = `${dropPercent}%`;
+
+            // Matrix values
+            document.getElementById('matrixBeforeRPN').innerText = bRPN;
+            document.getElementById('matrixAfterRPN').innerText = aRPN;
+
+            // Summary text update
+            const summaryEl = document.getElementById('summaryText');
+            summaryEl.innerHTML = `
+                "제안된 CAPA 적용 결과, RPN이 <strong>${bRPN}점(${bRPN >= 100 ? '수용 불가' : '경계'})</strong>에서 
+                <strong>${aRPN}점(허용 가능)</strong>으로 <strong>${dropPercent}% 대폭 감소</strong>합니다. 
+                이는 인적 오류(Human Error) 유발 근본 원인을 완벽히 통제함을 FMEA 기법으로 객관적으로 입증하였으므로, 
+                <strong>본 CAPA 개선안 추진은 타당하며 실행을 권고합니다.</strong>"
+            `;
+
+            // Update Heatmap Grid
+            renderMatrixGrid(bS, bO, aS, aO);
+        }
+
+        // Update Badge Helper
+        function updateRiskBadge(badgeId, rpn) {
+            const badge = document.getElementById(badgeId);
+            if (!badge) return;
+
+            if (rpn >= 100) {
+                badge.className = "px-3 py-1 bg-rose-700 text-rose-100 text-xs font-bold rounded-full uppercase tracking-wider pulse-red";
+                badge.innerText = "🚨 수용 불가 (HIGH RISK)";
+            } else if (rpn >= 50) {
+                badge.className = "px-3 py-1 bg-amber-600 text-amber-100 text-xs font-bold rounded-full uppercase tracking-wider";
+                badge.innerText = "⚠️ 경계 (MEDIUM RISK)";
+            } else {
+                badge.className = "px-3 py-1 bg-emerald-800 text-emerald-100 text-xs font-bold rounded-full uppercase tracking-wider pulse-green";
+                badge.innerText = "✅ 허용 가능 (ACCEPTABLE)";
+            }
+        }
+
+        // Render 5x5 Heatmap Grid
+        function renderMatrixGrid(bS = 6, bO = 8, aS = 6, aO = 2) {
+            const gridContainer = document.getElementById('matrixGrid');
+            if (!gridContainer) return;
+
+            gridContainer.innerHTML = '';
+
+            // Mapping 1-10 to 5-level grid (1-2=1, 3-4=2, 5-6=3, 7-8=4, 9-10=5)
+            const mapTo5 = (val) => Math.min(5, Math.max(1, Math.ceil(val / 2)));
+
+            const bS5 = mapTo5(bS);
+            const bO5 = mapTo5(bO);
+            const aS5 = mapTo5(aS);
+            const aO5 = mapTo5(aO);
+
+            // Render 5 rows (Severity 5 down to 1)
+            for (let r = 5; r >= 1; r--) {
+                for (let c = 1; c <= 5; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'h-12 rounded-lg flex items-center justify-center font-bold text-[10px] relative transition-all border border-black/5';
+
+                    // Cell severity risk color
+                    const score = r * c;
+                    if (score >= 15) {
+                        cell.classList.add('bg-rose-200', 'text-rose-900');
+                    } else if (score >= 8) {
+                        cell.classList.add('bg-amber-200', 'text-amber-900');
+                    } else {
+                        cell.classList.add('bg-emerald-200', 'text-emerald-900');
+                    }
+
+                    // Check if Before or After point is in this cell
+                    const isBefore = (r === bS5 && c === bO5);
+                    const isAfter = (r === aS5 && c === aO5);
+
+                    if (isBefore && isAfter) {
+                        cell.innerHTML = `
+                            <span class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black shadow-md border-2 border-white text-[9px]">
+                                B/A
+                            </span>
+                        `;
+                    } else if (isBefore) {
+                        cell.innerHTML = `
+                            <span class="w-7 h-7 rounded-full bg-rose-600 text-white flex items-center justify-center font-black shadow-md border-2 border-white pulse-red text-[10px]">
+                                Before
+                            </span>
+                        `;
+                    } else if (isAfter) {
+                        cell.innerHTML = `
+                            <span class="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black shadow-md border-2 border-white pulse-green text-[10px]">
+                                After
+                            </span>
+                        `;
+                    } else {
+                        cell.innerText = `${r * 2},${c * 2}`;
+                        cell.classList.add('opacity-40');
+                    }
+
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+
+        // Execute AI Assessment
+        async function executeFMEAAIAssessment() {
+            const issueText = document.getElementById('issueText').value.trim();
+            const capaText = document.getElementById('capaText').value.trim();
+
+            if (!issueText || !capaText) {
+                showToast("발생 문제 상황과 개선 방안(CAPA)을 모두 입력해 주세요.", "warning");
+                return;
+            }
+
+            const btn = document.getElementById('btnAnalyze');
+            const originalBtnContent = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>AI & FMEA 엔진 연산 중...</span>`;
+            btn.disabled = true;
+
+            try {
+                const aiResult = await callGeminiFMEAAnalysis(issueText, capaText);
+                if (aiResult) {
+                    setSliderValues('beforeS', aiResult.beforeS);
+                    setSliderValues('beforeO', aiResult.beforeO);
+                    setSliderValues('beforeD', aiResult.beforeD);
+
+                    setSliderValues('afterS', aiResult.afterS);
+                    setSliderValues('afterO', aiResult.afterO);
+                    setSliderValues('afterD', aiResult.afterD);
+
+                    document.getElementById('beforeS_reason').innerText = aiResult.beforeS_reason;
+                    document.getElementById('beforeO_reason').innerText = aiResult.beforeO_reason;
+                    document.getElementById('beforeD_reason').innerText = aiResult.beforeD_reason;
+
+                    document.getElementById('afterS_reason').innerText = aiResult.afterS_reason;
+                    document.getElementById('afterO_reason').innerText = aiResult.afterO_reason;
+                    document.getElementById('afterD_reason').innerText = aiResult.afterD_reason;
+
+                    calculateRPN();
+                    showToast("AI 지능형 FMEA 평가 및 점수 산정이 완료되었습니다.", "success");
+                } else {
+                    calculateRPN();
+                    showToast("FMEA 규칙 엔진 기반 평가가 완료되었습니다.", "info");
+                }
+            } catch (err) {
+                console.warn("AI Assessment Fallback:", err);
+                calculateRPN();
+                showToast("규칙 기반 FMEA 평가로 연산을 완료했습니다.", "info");
+            } finally {
+                btn.innerHTML = originalBtnContent;
+                btn.disabled = false;
+            }
+        }
+
+        // Gemini API Request
+        async function callGeminiFMEAAnalysis(issueText, capaText) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `You are a senior 10-year Pharmaceutical QC QRM (Quality Risk Management) expert following ICH Q9 guidelines.
+Analyze the user's pharmaceutical QC problem (Failure Mode) and proposed CAPA.
+Evaluate Severity (S: 1-10), Occurrence (O: 1-10), Detection (D: 1-10) for BEFORE CAPA and AFTER CAPA.
+Crucial Rule: Severity (S) must NOT decrease unless the actual patient/product impact changes (typically S remains constant). CAPA mainly reduces Occurrence (O) and Detection (D).
+Return JSON adhering strictly to the schema in Korean.`;
+
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: `[발생 문제]: ${issueText}\n[개선 방안 CAPA]: ${capaText}` }]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            beforeS: { type: "INTEGER" },
+                            beforeO: { type: "INTEGER" },
+                            beforeD: { type: "INTEGER" },
+                            beforeS_reason: { type: "STRING" },
+                            beforeO_reason: { type: "STRING" },
+                            beforeD_reason: { type: "STRING" },
+                            afterS: { type: "INTEGER" },
+                            afterO: { type: "INTEGER" },
+                            afterD: { type: "INTEGER" },
+                            afterS_reason: { type: "STRING" },
+                            afterO_reason: { type: "STRING" },
+                            afterD_reason: { type: "STRING" }
+                        },
+                        required: ["beforeS", "beforeO", "beforeD", "beforeS_reason", "beforeO_reason", "beforeD_reason", "afterS", "afterO", "afterD", "afterS_reason", "afterO_reason", "afterD_reason"]
+                    }
+                },
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) return null;
+            const result = await response.json();
+            const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!jsonText) return null;
+
+            return JSON.parse(jsonText);
+        }
+
+        // Save Current Assessment to Table History
+        function saveCurrentAssessment() {
+            const issueText = document.getElementById('issueText').value.trim();
+            const bRPN = document.getElementById('beforeRPN').innerText;
+            const aRPN = document.getElementById('afterRPN').innerText;
+            const dropPercent = document.getElementById('reductionPercentText').innerText;
+
+            if (!issueText) {
+                showToast("저장할 문제 상황이 입력되지 않았습니다.", "warning");
+                return;
+            }
+
+            const item = {
+                id: Date.now(),
+                date: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+                title: issueText.substring(0, 30) + "...",
+                bRPN,
+                aRPN,
+                dropPercent
+            };
+
+            assessmentHistory.unshift(item);
+            renderHistoryTable();
+            showToast("현재 FMEA 평가 결과가 세션 이력에 저장되었습니다.", "success");
+        }
+
+        // Render History Table
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            if (!tbody) return;
+
+            if (assessmentHistory.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-4 text-center text-slate-400">저장된 평가 이력이 없습니다.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = assessmentHistory.map(item => `
+                <tr class="hover:bg-slate-50 transition-all">
+                    <td class="p-3 font-semibold">${item.date}</td>
+                    <td class="p-3 font-medium text-slate-800">${item.title}</td>
+                    <td class="p-3 font-bold text-rose-600">${item.bRPN}점</td>
+                    <td class="p-3 font-bold text-emerald-600">${item.aRPN}점</td>
+                    <td class="p-3 font-bold text-teal-600">${item.dropPercent}</td>
+                    <td class="p-3 text-right">
+                        <button type="button" onclick="deleteHistory(${item.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteHistory(id) {
+            assessmentHistory = assessmentHistory.filter(h => h.id !== id);
+            renderHistoryTable();
+            showToast("선택한 항목이 이력에서 삭제되었습니다.", "info");
+        }
+
+        // Form Reset
+        function resetForm() {
+            document.getElementById('issueText').value = '';
+            document.getElementById('capaText').value = '';
+            updateCharCount('issueText', 'issueCharCount');
+            updateCharCount('capaText', 'capaCharCount');
+            showToast("입력 폼이 초기화되었습니다.", "info");
+        }
+
+        // Modal Handlers
+        function openSodModal() {
+            document.getElementById('sodModal').classList.remove('hidden');
+        }
+        function closeSodModal() {
+            document.getElementById('sodModal').classList.add('hidden');
+        }
+
+        // PDF Print Handler
+        function printReport() {
+            window.print();
+        }
+
+        // Copy Summary to Clipboard Handler
+        function copySummaryToClipboard() {
+            const text = document.getElementById('summaryText').innerText;
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast("요약 리포트가 클립보드에 복사되었습니다!", "success");
+        }
+
+        // Export CSV
+        function exportCsv() {
+            if (assessmentHistory.length === 0) {
+                showToast("내보낼 저장 이력이 없습니다.", "warning");
+                return;
+            }
+
+            let csv = "ID,Time,Issue_Title,Before_RPN,After_RPN,Reduction_Rate\n";
+            assessmentHistory.forEach(item => {
+                csv += `"${item.id}","${item.date}","${item.title.replace(/"/g, '""')}","${item.bRPN}","${item.aRPN}","${item.dropPercent}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', `FMEA_Assessment_Log_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSV 파일 다운로드가 시작되었습니다.", "success");
+        }
+
+        // Custom Toast Notification Function
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-xl shadow-xl text-white text-xs font-bold flex items-center justify-between gap-3 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+
+            let bgClass = "bg-slate-800";
+            let iconClass = "fa-circle-info";
+
+            if (type === "success") {
+                bgClass = "bg-emerald-600";
+                iconClass = "fa-circle-check";
+            } else if (type === "warning") {
+                bgClass = "bg-amber-600";
+                iconClass = "fa-triangle-exclamation";
+            } else if (type === "error") {
+                bgClass = "bg-rose-600";
+                iconClass = "fa-circle-xmark";
+            }
+
+            toast.classList.add(bgClass);
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid ${iconClass} text-sm"></i>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+    <footer style="margin-top: 50px; padding: 25px 0; border-top: 1px solid #e1e4e8; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #586069; font-size: 13px; line-height: 1.5;">
+    <!-- 프로그램 타이틀 및 설명 -->
+    <div style="margin-bottom: 12px;">
+        <strong style="color: #24292e; font-size: 14px;">FMEA Risk Assessment Tool v1.0.0</strong> 
+        <span style="color: #0366d6;">(for Pharma Quality Management)</span>
+        <p style="margin: 4px 0 0 0; color: #6a737d; font-size: 12px;">
+            * 본 프로그램은 제약 공정 내 잠재적 위험 분석 효율화를 위해 제작되었습니다.
+        </p>
+    </div>
+
+    <div style="margin-bottom: 10px; font-size: 12px;">
+    <button onclick="navigator.clipboard.writeText('wlsdud_2014@naver.com'); alert('이메일 주소가 복사되었습니다! (Ctrl+V로 붙여넣으세요)');" style="background: none; border: 1px solid #0366d6; color: #0366d6; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+        📋 이메일 문의 
+    </button>
+</div>
+
+    <!-- 저작권 표시 (장진영 님 이름 명시) -->
+    <div style="color: #8b949e; font-size: 11px;">
+        &copy; 2026. 장진영 All rights reserved.
+    </div>
+</footer>
+</body>
+</html>
